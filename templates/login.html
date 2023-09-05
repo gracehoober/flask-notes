@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<form id="register-form" method="POST">
+<form id="login-form" method="POST">
   {{ form.hidden_tag() }}
 
   {% for field in form
@@ -19,6 +19,7 @@
 
   {% endfor %}
 
-  <button type="submit">Register</button>
+  <button type="submit">Log In</button>
 </form>
+
 {% endblock %}

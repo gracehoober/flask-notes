@@ -4,7 +4,7 @@ from flask import Flask, redirect, render_template, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 
 from models import db, connect_db, User
-from forms import RegisterForm
+from forms import RegisterForm, LoginForm
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
@@ -17,6 +17,9 @@ connect_db(app)
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 app.config['SECRET_KEY'] = "I'LL NEVER TELL!!"
 debug = DebugToolbarExtension(app)
+
+
+#REGISTRATION ROUTES
 
 @app.get("/")
 def homepage():
@@ -60,6 +63,32 @@ def register_user():
     # render the template, form
     else:
         return render_template('register.html',form=form)
+
+# LOGIN ROUTES
+
+@app.route('/login', methods=["GET","POST"])
+def user_login():
+
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+
+        auth_user = User.authenticate(username,password)
+
+        if auth_user:
+            session["user_id"] = auth_user.username
+            return redirect(f'/users/{username}')
+
+        else:
+            form.username.errors = ["Invalid Credentials"]
+
+    return render_template('login.html',form=form)
+
+
+
+
 
 
 
