@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, BooleanField, PasswordField
-from wtforms.validators import Email, Optional, InputRequired
+from wtforms import StringField, PasswordField
+from wtforms.validators import Email, InputRequired
+
 
 class RegisterForm(FlaskForm):
     """Form for registering user"""
@@ -19,6 +20,8 @@ class RegisterForm(FlaskForm):
 
     last_name = StringField("Last Name",
                            validators=[InputRequired()])
+
+    #add in length constraints same as db constraints
 
 class LoginForm(FlaskForm):
     """Form for logging in User"""

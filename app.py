@@ -31,45 +31,55 @@ def homepage():
 def register_user():
     """Register a user: produce form and handle form submission"""
 
-# make a form and then instantiate it
+
     form = RegisterForm()
-# validate the form
-    # grab from form
-    # add info to db
-    # save user in the current session
-    if form.validate_on_submit():
-        username = form.username.data
-        password = form.password.data
-        email = form.email.data
-        first_name = form.first_name.data
-        last_name = form.last_name.data
 
-        user = User.register(username, password)
+    users = User.query.all()
+    emails = [user.email for user in users]
 
-        new_user = User(username = user.username,
-                        password = user.password,
-                        email=email,
-                        first_name=first_name,
-                        last_name=last_name)
+    if (form.email.data not in emails):
 
-        db.session.add(new_user) #FIXME: get a db failure instead of telling the user invalid input
-        db.session.commit()
+        if form.validate_on_submit():
+            username = form.username.data
+            password = form.password.data
+            email = form.email.data
+            #Move dupe email/username check inside here using one or none()
+            first_name = form.first_name.data
+            last_name = form.last_name.data
 
-        session["user_id"] = username
+            user = User.register(username, password)
 
-        return redirect(f'/users/{username}')
+            new_user = User(username = user.username,
+                            password = user.password,
+                            email=email,
+                            first_name=first_name,
+                            last_name=last_name)
+            # pass lines 51 - 55 into line 49, pass user directly into line 58
 
-# fails validation
-    # render the template, form
+            db.session.add(new_user)
+            db.session.commit()
+
+            session["user_id"] = username
+
+            return redirect(f'/users/{username}')
+
     else:
-        return render_template('register.html',form=form)
+        flash('Email already exists in database')
+
+    return render_template('register.html',form=form)
 
 # LOGIN ROUTES
 
 @app.route('/login', methods=["GET","POST"])
 def user_login():
+    """Renders user login page and handles username/pw validation"""
+
+
+# if user is already logged in, redirect to userpage first
 
     form = LoginForm()
+
+
 
     if form.validate_on_submit():
         username = form.username.data
@@ -89,13 +99,21 @@ def user_login():
 
 @app.get("/users/<username>")
 def user_page(username):
-    """User page"""
+    """Renders user page"""
 
     user = User.query.get_or_404(username)
 
+    form = CSRFProtectForm()
+
+
+#rearrange logic: if user is not the user in route, boot em out first
+
+    if "user_id" not in session:
+        return redirect('/login')
+
     if session["user_id"] == user.username:
 
-        return render_template('user_page.html', user=user)#render specific user page
+        return render_template('user_page.html', user=user,form=form)
     else:
         flash("You must be logged in to view!")
         return redirect("/login")

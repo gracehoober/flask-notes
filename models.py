@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 
+
 db = SQLAlchemy()
 
 bcrypt = Bcrypt()
@@ -26,6 +27,7 @@ class User(db.Model):
         db.String(100),
         nullable=False
     )
+    #Text field instead of String
 
     email= db.Column(
         db.String(50),
