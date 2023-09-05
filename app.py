@@ -1,10 +1,10 @@
 import os
 
-from flask import Flask, redirect, render_template, flash
+from flask import Flask, redirect, render_template, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 
 from models import db, connect_db, User
-#from forms import
+from forms import
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
@@ -42,8 +42,21 @@ def register_user():
 
         user = User.register(username, password)
 
+        new_user = User(username = user.username,
+                        password = user.password,
+                        email=email,
+                        first_name=first_name,
+                        last_name=last_name)
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        session["user_id"] = username
+
 # fails validation
     # render the template, form
+    else:
+        return render_template('register.html',form=form)
 
 
 
