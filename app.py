@@ -4,7 +4,7 @@ from flask import Flask, redirect, render_template, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 
 from models import db, connect_db, User
-from forms import
+from forms import RegisterForm
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
@@ -15,6 +15,7 @@ app.config['SQLALCHEMY_ECHO'] = True
 connect_db(app)
 
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+app.config['SECRET_KEY'] = "I'LL NEVER TELL!!"
 debug = DebugToolbarExtension(app)
 
 @app.get("/")
@@ -52,6 +53,8 @@ def register_user():
         db.session.commit()
 
         session["user_id"] = username
+
+        return redirect(f'/users/{username}')
 
 # fails validation
     # render the template, form
