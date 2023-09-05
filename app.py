@@ -4,7 +4,7 @@ from flask import Flask, redirect, render_template, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 
 from models import db, connect_db, User
-from forms import RegisterForm, LoginForm
+from forms import RegisterForm, LoginForm, CSRFProtectForm
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
@@ -52,7 +52,7 @@ def register_user():
                         first_name=first_name,
                         last_name=last_name)
 
-        db.session.add(new_user)
+        db.session.add(new_user) #FIXME: get a db failure instead of telling the user invalid input
         db.session.commit()
 
         session["user_id"] = username
@@ -87,7 +87,31 @@ def user_login():
     return render_template('login.html',form=form)
 
 
+@app.get("/users/<username>")
+def user_page(username):
+    """User page"""
 
+    user = User.query.get_or_404(username)
+
+    if session["user_id"] == user.username:
+
+        return render_template('user_page.html', user=user)#render specific user page
+    else:
+        flash("You must be logged in to view!")
+        return redirect("/login")
+
+
+@app.post("/logout")
+def logout_user():
+    """Logs user out and redirects to homepage."""
+
+    form = CSRFProtectForm()
+
+    if form.validate_on_submit():
+        # Remove "user_id" if present, but no errors if it wasn't
+        session.pop("user_id", None)
+
+    return redirect("/")
 
 
 
