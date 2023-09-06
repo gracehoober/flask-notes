@@ -3,8 +3,8 @@ import os
 from flask import Flask, redirect, render_template, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 
-from models import db, connect_db, User
-from forms import RegisterForm, LoginForm, CSRFProtectForm
+from models import db, connect_db, User, Note
+from forms import RegisterForm, LoginForm, CSRFProtectForm, NoteForm
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
@@ -31,42 +31,32 @@ def homepage():
 def register_user():
     """Register a user: produce form and handle form submission"""
 
-
     form = RegisterForm()
 
-    users = User.query.all()
-    emails = [user.email for user in users]
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+        email = form.email.data
+        first_name = form.first_name.data
+        last_name = form.last_name.data
 
-    if (form.email.data not in emails):
+        # if User.query.filter(User.username==username).one_or_none:
+        #     flash("Username already exists!")
+        #     return render_template('register.html',form=form)
 
-        if form.validate_on_submit():
-            username = form.username.data
-            password = form.password.data
-            email = form.email.data
-            #Move dupe email/username check inside here using one or none()
-            first_name = form.first_name.data
-            last_name = form.last_name.data
+        # if User.query.filter(User.email==email).one_or_none:
+        #     flash("Email already exists!")
+        #     return render_template('register.html',form=form)
 
-            user = User.register(username, password)
+        user = User.register(username, password, email, first_name, last_name)
 
-            new_user = User(username = user.username,
-                            password = user.password,
-                            email=email,
-                            first_name=first_name,
-                            last_name=last_name)
-            # pass lines 51 - 55 into line 49, pass user directly into line 58
+        db.session.add(user)
+        db.session.commit()
+        session["user_id"] = username
 
-            db.session.add(new_user)
-            db.session.commit()
-
-            session["user_id"] = username
-
-            return redirect(f'/users/{username}')
-
+        return redirect(f'/users/{username}')
     else:
-        flash('Email already exists in database')
-
-    return render_template('register.html',form=form)
+        return render_template('register.html',form=form)
 
 # LOGIN ROUTES
 
@@ -74,12 +64,10 @@ def register_user():
 def user_login():
     """Renders user login page and handles username/pw validation"""
 
-
-# if user is already logged in, redirect to userpage first
+    if "user_id" in session:
+        return redirect(f'/users/{session["user_id"]}')
 
     form = LoginForm()
-
-
 
     if form.validate_on_submit():
         username = form.username.data
@@ -105,15 +93,12 @@ def user_page(username):
 
     form = CSRFProtectForm()
 
-
-#rearrange logic: if user is not the user in route, boot em out first
-
     if "user_id" not in session:
         return redirect('/login')
 
     if session["user_id"] == user.username:
 
-        return render_template('user_page.html', user=user,form=form)
+        return render_template('user_page.html',user=user,form=form)
     else:
         flash("You must be logged in to view!")
         return redirect("/login")
@@ -131,6 +116,42 @@ def logout_user():
 
     return redirect("/")
 
+#User routes
 
+@app.post("/users/<username>/delete")
+def delete_user(username):
+    """Remove user from database"""
+    user = User.query.get_or_404(username)
+    notes = user.notes
 
+    for note in notes:
+        db.session.delete(note)
+    # db.session.commit()
 
+    db.session.delete(user)
+    db.session.commit()
+
+    return redirect("/")
+
+@app.route("/users/<username>/notes/add", methods=["GET", "POST"])
+def add_note(username):
+    """Create a note: produce note form and note submission."""
+
+    # if "user_id" in session:
+    #     return redirect(f'/users/{session["user_id"]}')
+
+    form = NoteForm()
+
+    if form.validate_on_submit():
+        title = form.title.data
+        content = form.content.data
+
+        new_note= Note(title=title, content=content, owner_username=username)
+
+        db.session.add(new_note)
+        db.session.commit()
+
+        return redirect(f'/users/{username}')
+
+    else:
+        return render_template("note_add.html", form=form)

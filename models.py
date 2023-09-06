@@ -27,7 +27,6 @@ class User(db.Model):
         db.String(100),
         nullable=False
     )
-    #Text field instead of String
 
     email= db.Column(
         db.String(50),
@@ -46,13 +45,17 @@ class User(db.Model):
     )
 
     @classmethod
-    def register(cls, username, password):
+    def register(cls, username, password, email, first_name, last_name):
         """Register user w/hashed password & return user."""
 
         hashed = bcrypt.generate_password_hash(password).decode('utf8')
 
         # return instance of user w/username and hashed pwd
-        return cls(username=username, password=hashed)
+        return cls(username=username,
+                   password=hashed,
+                   email=email,
+                   first_name=first_name,
+                   last_name=last_name)
 
 
     @classmethod
@@ -69,3 +72,29 @@ class User(db.Model):
             return False
 
 
+class Note(db.Model):
+    """User Note"""
+    __tablename__ = "notes"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        autoincrement=True)
+
+    title = db.Column(
+        db.String(100),
+        nullable=False
+    )
+
+    content = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    owner_username = db.Column(
+        db.Text,
+        db.ForeignKey('users.username'),
+        nullable=False
+    )
+
+    user = db.relationship('User', backref='notes')

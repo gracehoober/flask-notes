@@ -6,6 +6,23 @@
   <p>User email: {{ user.email }}</p>
   <p>Username: {{ user.username}}</p>
 </div>
+<div>
+  <h3>Notes</h3>
+  <ul>
+    {% for note in user.notes %}
+    <li>
+      <form action="/notes/{{ note.id }}/delete" method="POST">
+        <button>Delete</button>
+      </form>
+      <a href="/notes/{{ note.id }}/update">Edit</a>
+      {{ note.title }} {{ note.content }}</li>
+    {% endfor %}
+  </ul>
+  <a href="/users/{{ user.username }}/notes/add">Add more notes!</a>
+  <form action="/users/{{ user.username }}/delete" method="POST">
+    <button>Delete user account</button>
+  </form>
+</div>
 
 <form action="/logout" method="POST">
   {{ form.hidden_tag() }}
